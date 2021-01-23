@@ -1,9 +1,16 @@
 package be.afhistos.socketserver;
 
+import javax.swing.*;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
+import javax.swing.event.ChangeListener;
+import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class ObjectServer {
     private String ip;
@@ -48,12 +55,10 @@ public class ObjectServer {
     public ServerState getState() {
         return state;
     }
-
+    ActionListener button;
     private void setState(ServerState state) {
         this.state = state;
-        for(ServerListener sl : listeners){
-            sl.onStateChange(this);
-        }
+        listeners.forEach(sl -> sl.onStateChange(this));
     }
 
     public List<ClientHandler> getClients() {
@@ -73,9 +78,14 @@ public class ObjectServer {
             while(state.equals(ServerState.RUNNING)){
                 try {
                     ClientHandler client = new ClientHandler(this, serverSocket.accept());
-                    
+                    clients.add(client);
+                    //client.start();
+                    listeners.forEach(sl-> sl.onConnection(this, client));
                 } catch (IOException e) {
+                    listeners.forEach(sl-> sl.onError(this,e));
+
                     e.printStackTrace();
+
                 }
             }
 
