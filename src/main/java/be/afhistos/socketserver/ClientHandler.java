@@ -13,7 +13,7 @@ public class ClientHandler{
     private ObjectInputStream in;
     private ObjectOutputStream out;
     private Thread inThread, outThread;
-    private Deque<ServerPacket> packetQueue;
+    private Deque<ServerPacket> packetDeque;
     private String guildId;
 
     public ServerPacket logoutPacket = new ServerPacket("LOGOUT", null);
@@ -21,7 +21,7 @@ public class ClientHandler{
     public ClientHandler(ObjectServer server, Socket s) {
         this.server = server;
         this.s = s;
-        packetQueue = new LinkedList<>();
+        packetDeque = new LinkedList<>();
     }
 
     public void start(){
@@ -33,7 +33,7 @@ public class ClientHandler{
             inThread.start();
             outThread.start();
         } catch (IOException e) {
-            e.printStackTrace();
+            server.getListeners().forEach(sl->{sl.onConnectionError(server,this,e);});
         }
     }
 
@@ -51,16 +51,16 @@ public class ClientHandler{
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    packetQueue.clear();
+                    packetDeque.clear();
                 }
             }
         });
-        packetQueue.offerFirst(logoutPacket);
+        packetDeque.offerFirst(logoutPacket);
 
     }
 
     public void sendPacket(ServerPacket packet){
-        packetQueue.offer(packet);
+        packetDeque.offer(packet);
     }
 
     private Thread getInThread(){
@@ -82,7 +82,7 @@ public class ClientHandler{
         if(out == null){return null;}
         return new Thread(()->{
            while(server.getState()==ServerState.RUNNING){
-               packetQueue.forEach(serverPacket -> {
+               packetDeque.forEach(serverPacket -> {
                    try {
                        out.writeObject(serverPacket);
                        server.getListeners().forEach(sl->{sl.onPacketSent(server, this, serverPacket);});

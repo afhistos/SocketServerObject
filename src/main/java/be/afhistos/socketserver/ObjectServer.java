@@ -31,18 +31,18 @@ public class ObjectServer {
     }
 
     public ObjectServer(Properties props){
-        this(props.getProperty("ip", "localhost"), Integer.parseInt(props.getProperty("port", "4444")));
+        this(props.getProperty("ip", "localhost"), Integer.parseInt(props.getProperty("port", "44444")));
     }
 
     public ObjectServer(String ip) {
-        this(ip, 4444);
+        this(ip, 44444);
     }
 
     public ObjectServer(int port) {
         this("localhost", port);
     }
     public ObjectServer(){
-        this("localhost", 4444);
+        this("localhost", 44444);
     }
 
     public void start(){
@@ -105,8 +105,9 @@ public class ObjectServer {
     }
 
     private void setState(ServerState state) {
+        ServerState oldState = this.state;
         this.state = state;
-        listeners.forEach(sl -> sl.onStateChange(this));
+        listeners.forEach(sl -> sl.onStateChange(this, oldState, state));
     }
 
     public List<ClientHandler> getClients() {
