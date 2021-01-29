@@ -21,7 +21,9 @@
                 <version>2.7</version>
                 <configuration>
                     <altDeploymentRepository>internal.repo::default::file://${project.build.directory}/mvn-repo</altDeploymentRepository>
+                    <file>/src/main/resources/README.md</file>
                 </configuration>
+
             </plugin>
             <plugin>
                 <groupId>com.github.github</groupId>
@@ -32,6 +34,7 @@
                     <noJekyll>true</noJekyll>  <!-- disable webpage processing -->
                     <outputDirectory>${project.build.directory}/mvn-repo</outputDirectory> <!-- matches distribution management repository url above -->
                     <branch>refs/heads/mvn-repo</branch> <!-- remote branch name -->
+
                     <includes><include>**/*.*</include></includes>
                     <repositoryName>SocketServerObject</repositoryName> <!-- github repo name -->
                     <repositoryOwner>afhistos</repositoryOwner> <!-- organization or user name  -->
