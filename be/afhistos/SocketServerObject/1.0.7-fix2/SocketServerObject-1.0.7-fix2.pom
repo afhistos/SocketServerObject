@@ -6,7 +6,7 @@
 
     <groupId>be.afhistos</groupId>
     <artifactId>SocketServerObject</artifactId>
-    <version>1.0.7-fix</version>
+    <version>1.0.7-fix2</version>
     <packaging>jar</packaging>
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
