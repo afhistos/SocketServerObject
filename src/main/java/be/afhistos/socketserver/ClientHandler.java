@@ -13,10 +13,10 @@ public class ClientHandler{
     private ObjectInputStream in;
     private ObjectOutputStream out;
     private Thread inThread, outThread;
-    private Deque<ServerPacket> packetDeque;
+    private Deque<Object> packetDeque;
     private String guildId;
+    private ServerPacket logoutPacket = new ServerPacket("LOGOUT", null);
 
-    public ServerPacket logoutPacket = new ServerPacket("LOGOUT", null);
 
     public ClientHandler(ObjectServer server, Socket s) {
         this.server = server;
@@ -67,13 +67,12 @@ public class ClientHandler{
         if(in ==  null){return null;}
         return new Thread(()->{
             while(server.getState()==ServerState.RUNNING){
-                server.getListeners().forEach(sl-> {
-                    try {
-                        sl.onPacketReceived(server,this,(ServerPacket) in.readObject());
-                    } catch (IOException | ClassNotFoundException e) {
-                        sl.onConnectionError(server, this, e);
-                    }
-                });
+                try {
+                    ServerPacket received = (ServerPacket) in.readObject();
+                    server.getListeners().forEach(sl->sl.onPacketReceived(server, this, received));
+                } catch (IOException | ClassNotFoundException e) {
+                    server.getListeners().forEach(sl->{sl.onConnectionError(server, this, e);});
+                }
             }
         });
     }
@@ -85,13 +84,17 @@ public class ClientHandler{
                packetDeque.forEach(serverPacket -> {
                    try {
                        out.writeObject(serverPacket);
-                       server.getListeners().forEach(sl->{sl.onPacketSent(server, this, serverPacket);});
+                       server.getListeners().forEach(sl->{sl.onPacketSent(server, this, (ServerPacket) serverPacket);});
                    } catch (IOException e) {
                        server.getListeners().forEach(sl->{sl.onConnectionError(server, this, e);});
                    }
                });
            }
         });
+    }
+
+    public Socket getSocket() {
+        return s;
     }
 
     public String getGuildId() {
@@ -104,5 +107,9 @@ public class ClientHandler{
 
     public void setLogoutPacket(ServerPacket logoutPacket) {
         this.logoutPacket = logoutPacket;
+    }
+
+    public ServerPacket getLogoutPacket() {
+        return logoutPacket;
     }
 }

@@ -1,18 +1,14 @@
 package be.afhistos.socketserver;
 
 
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.logging.Logger;
 
 public class ObjectServer {
-    private Logger logger;
-    private String ip;
     private int port;
     private Thread serverThread;
     private ServerSocket serverSocket;
@@ -20,10 +16,8 @@ public class ObjectServer {
     private List<ClientHandler> clients;
     private List<ServerListener> listeners;
 
-    public ObjectServer(String ip, int port) {
-        logger = Logger.getLogger(ObjectServer.class.getName());
+    public ObjectServer(int port) {
         this.state = ServerState.OFF;
-        this.ip = ip;
         this.port = port;
         clients = new ArrayList<>();
         listeners = new ArrayList<>();
@@ -31,18 +25,12 @@ public class ObjectServer {
     }
 
     public ObjectServer(Properties props){
-        this(props.getProperty("ip", "localhost"), Integer.parseInt(props.getProperty("port", "44444")));
+        this(Integer.parseInt(props.getProperty("port", "44444")));
     }
 
-    public ObjectServer(String ip) {
-        this(ip, 44444);
-    }
 
-    public ObjectServer(int port) {
-        this("localhost", port);
-    }
     public ObjectServer(){
-        this("localhost", 44444);
+        this(44444);
     }
 
     public void start(){
@@ -60,6 +48,7 @@ public class ObjectServer {
             listeners.forEach(sl->sl.onError(this, e));
             e.printStackTrace();
         }
+        setState(ServerState.OFF);
     }
 
     private Thread getServerRunnable(){
@@ -79,21 +68,19 @@ public class ObjectServer {
                     clients.add(client);
                     client.start();
                     listeners.forEach(sl-> sl.onConnection(this, client));
-                } catch (SocketException e){
-                    listeners.forEach(sl->sl.onError(this,e));
-                    logger.severe("Socket fermé de manière innatendue!");
-                    stop();
+                } catch (SocketException ign){
+                    /*
+                    Error thrown when the server closes.
+                    Because ServerSocket#accept is blocking, the Thread does not terminate when calling interrupt(),
+                    but the socket is still closed.
+                    So just ignore this error.
+                     */
                 } catch (IOException e) {
                     listeners.forEach(sl-> sl.onError(this,e));
-                    logger.severe("Impossible d'utiliser le port "+port);
                     stop();
                 }
             }
         });
-    }
-
-    public String getIpAddress() {
-        return ip;
     }
 
     public int getPort() {
@@ -123,4 +110,5 @@ public class ObjectServer {
     public List<ServerListener> getListeners() {
         return listeners;
     }
+
 }
